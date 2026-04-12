@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { todayISO } from '@/lib/utils'
+import { calculateCapacity } from '@/lib/types'
 
 export async function createOrUpdateDailyLog(formData: FormData) {
   const supabase = await createClient()
@@ -16,6 +17,8 @@ export async function createOrUpdateDailyLog(formData: FormData) {
   const morning_notes = formData.get('morning_notes') as string || null
   const date = todayISO()
 
+  const { score, state } = calculateCapacity(energy_level, focus_level, pain_level)
+
   const { data, error } = await supabase
     .from('daily_logs')
     .upsert(
@@ -26,6 +29,8 @@ export async function createOrUpdateDailyLog(formData: FormData) {
         focus_level,
         pain_level,
         morning_notes,
+        capacity_score: score,
+        capacity_state: state,
       },
       { onConflict: 'user_id,date' }
     )

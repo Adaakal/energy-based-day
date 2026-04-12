@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Check, Trash2, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { CapacityBadge } from '@/components/ui/capacity-badge'
 import { Badge } from '@/components/ui/badge'
 import { createBlock, updateBlockCompletion, deleteBlock } from '@/app/actions/blocks'
-import { updateMinimumViableWin } from '@/app/actions/daily-log'
+import { updateMinimumViableWin, updateEveningReflection } from '@/app/actions/daily-log'
 import {
   getTasksForCapacity, CAPACITY_CONFIG, CAPACITY_BAND_LABELS,
   BLOCK_TYPE_LABELS, TASK_TYPE_LABELS,
@@ -20,6 +21,12 @@ import { cn, formatTime, calculateDuration, formatDuration } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
 
 // ── Block card ─────────────────────────────────────────────────────────────
+
+const completedBg: Record<CapacityState, string> = {
+  green: 'bg-emerald-500',
+  yellow: 'bg-amber-500',
+  red: 'bg-red-500',
+}
 
 function BlockCard({ block, capacityState, onDelete }: {
   block: Block
@@ -51,7 +58,7 @@ function BlockCard({ block, capacityState, onDelete }: {
             className={cn(
               'mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors',
               completed
-                ? `${config.border} bg-${capacityState === 'green' ? 'emerald' : capacityState === 'yellow' ? 'amber' : 'red'}-500`
+                ? `${config.border} ${completedBg[capacityState]}`
                 : 'border-gray-300 hover:border-gray-400'
             )}
           >
@@ -226,10 +233,14 @@ export function PlanView({ log, allTasks, blocks: initialBlocks }: {
   allTasks: Task[]
   blocks: Block[]
 }) {
+  const router = useRouter()
   const [blocks, setBlocks] = useState(initialBlocks)
   const [showAddBlock, setShowAddBlock] = useState(false)
   const [mvw, setMvw] = useState(log.minimum_viable_win ?? '')
   const [savingMvw, setSavingMvw] = useState(false)
+  const [reflection, setReflection] = useState(log.evening_reflection ?? '')
+  const [savingReflection, setSavingReflection] = useState(false)
+  const [reflectionSaved, setReflectionSaved] = useState(false)
   const [pending, startTransition] = useTransition()
 
   const config = CAPACITY_CONFIG[log.capacity_state as CapacityState]
@@ -239,6 +250,14 @@ export function PlanView({ log, allTasks, blocks: initialBlocks }: {
     setSavingMvw(true)
     await updateMinimumViableWin(log.id, mvw)
     setSavingMvw(false)
+  }
+
+  async function handleSaveReflection() {
+    setSavingReflection(true)
+    await updateEveningReflection(log.id, reflection)
+    setSavingReflection(false)
+    setReflectionSaved(true)
+    setTimeout(() => setReflectionSaved(false), 2000)
   }
 
   async function handleDeleteBlock(id: string) {
@@ -345,14 +364,38 @@ export function PlanView({ log, allTasks, blocks: initialBlocks }: {
         </Button>
       )}
 
-      {/* Evening reflection placeholder */}
-      {blocks.length > 0 && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
-          <p className="text-xs text-gray-400">
-            Check off blocks as you complete them. You&apos;ve got this.
+      {/* Evening reflection */}
+      <div className="mt-8 bg-gray-900 rounded-2xl p-6 text-white">
+        <p className="text-sm font-semibold mb-1">🌙 Evening Reflection</p>
+        <p className="text-xs text-gray-400 mb-4">
+          How did today go? What do you want to carry into tomorrow?
+        </p>
+        <Textarea
+          value={reflection}
+          onChange={e => setReflection(e.target.value)}
+          placeholder="Today I noticed… Tomorrow I want to…"
+          rows={4}
+          className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 resize-none"
+        />
+        <div className="flex items-center justify-between mt-3">
+          <p className="text-xs text-gray-500">
+            {reflection.length > 0 ? `${reflection.length} chars` : 'Optional — even one line helps.'}
           </p>
+          <Button
+            size="sm"
+            onClick={handleSaveReflection}
+            disabled={savingReflection || !reflection.trim()}
+            className="bg-white text-gray-900 hover:bg-gray-100"
+          >
+            {reflectionSaved ? '✓ Saved' : savingReflection ? 'Saving...' : 'Save'}
+          </Button>
         </div>
-      )}
+      </div>
+
+      {/* Wrap-up */}
+      <div className="mt-4 text-center text-xs text-gray-400 pb-4">
+        {blocks.filter(b => b.completed).length}/{blocks.length} blocks complete · You showed up today.
+      </div>
     </div>
   )
 }

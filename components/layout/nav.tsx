@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CheckSquare, ListTodo, CalendarDays, LogOut } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, ListTodo, CalendarDays, LogOut, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -53,9 +53,22 @@ export function Nav() {
           ))}
         </nav>
 
+        <Link
+          href="/export"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+            pathname.startsWith('/export')
+              ? 'bg-gray-100 text-gray-900'
+              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+          )}
+        >
+          <Download className="w-4 h-4" />
+          Export
+        </Link>
+
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors mt-4"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors mt-1"
         >
           <LogOut className="w-4 h-4" />
           Sign out

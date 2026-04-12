@@ -30,6 +30,8 @@ export default function CheckInPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
+    const { score, state } = calcCap(energy, focus, pain)
+
     const { data, error } = await supabase
       .from('daily_logs')
       .upsert(
@@ -40,6 +42,8 @@ export default function CheckInPage() {
           focus_level: focus,
           pain_level: pain,
           morning_notes: notes || null,
+          capacity_score: score,
+          capacity_state: state,
         },
         { onConflict: 'user_id,date' }
       )

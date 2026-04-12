@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "mcp__Claude_Preview__preview_start",
-      "Bash(git add .)"
+      "Bash(git add .)",
+      "Bash(git commit:*)",
+      "Bash(git remote add origin https://github.com/Adaakal/energy-based-day.git)",
+      "Bash(git push -u origin main)",
+      "Bash(chmod +x /Users/adaugoakaluso/Documents/energy_based_day_designer/.claude/start-dev.sh)"
     ]
   }
 }
